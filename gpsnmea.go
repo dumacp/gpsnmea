@@ -9,8 +9,9 @@ import (
 	"flag"
 	"github.com/tarm/serial"
 	"log"
-	"strings"
+	_ "strings"
 	"time"
+	"errors"
 )
 
 var timeout int
@@ -49,8 +50,9 @@ func main() {
 
 		for v := range ch {
 			reader := &Reader{
-				r: bufio.NewReader(strings.NewReader(string(v))),
+				buf: v,
 			}
+
 			b, err := reader.Gprmc()
 			if err != nil {
 				log.Println(err)
@@ -62,15 +64,23 @@ func main() {
 }
 
 type Reader struct {
-	r *bufio.Reader
+	buf	[]byte
+}
+
+func (r *Reader) Read(b []byte) (int, error) {
+	copy(b, r.buf[:])
+	return len(b), nil
 }
 
 func (r *Reader) Gprmc() ([]byte, error) {
-	var err error
-	for err != nil {
-		b, _, err := r.r.ReadLine()
+	bf := bufio.NewReader(r)
+	for {
+		b, _, err := bf.ReadLine()
 		if err != nil {
-			return nil, nil
+			return nil, err
+		}
+		if len(b) <= 0 {
+			return nil, errors.New("EOF")
 		}
 		if len(b) > 6 {
 			if string(b[0:6]) == "$GPRMC" {
@@ -114,7 +124,7 @@ func read(s *serial.Port, ch chan []byte, timeout int) {
 		default:
 			go func() {
 				if _, err := s.Read(buf); err != nil {
-					log.Println(err)
+					//log.Println(err)
 					eof <- true
 					return
 				}
