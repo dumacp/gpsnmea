@@ -1,40 +1,61 @@
+/*
+Package implements a binary for regular expressions.
+
+The syntax of the regular expressions accepted is:
+
+    regexp:
+        concatenation { '|' concatenation }
+    concatenation:
+        { closure }
+    closure:
+        term [ '*' | '+' | '?' ]
+    term:
+        '^'
+        '$'
+        '.'
+        character
+        '[' [ '^' ] character-ranges ']'
+        '(' regexp ')'
+*/
 package main
 
 import (
-	"log"
 	"flag"
 	"github.com/tarm/serial"
+	"log"
 	"time"
 )
 
-
 var timeout int
+var baudRate int
+var port string
+
 func init() {
-	flag.IntVar(&timeout, "timeout", 30, "timeout to capture frames (default: 30)")
+	flag.IntVar(&timeout, "timeout", 30, "timeout to capture frames.")
+	flag.IntVar(&baudRate, "baudRate", 115200, "baud rate to capture nmea's frames.")
+	flag.StringVar(&port, "port", "/dev/ttyUSB1", "device serial to read.")
 }
 
-
-
 func main() {
-	
+
 	flag.Parse()
-	log.Println("configurando serial")
-        config := &serial.Config{
-		Name: "/dev/ttyUSB1", 
-		Baud: 115200,
+	log.Println("port serial config ...")
+	config := &serial.Config{
+		Name:        port,
+		Baud:        baudRate,
 		ReadTimeout: time.Second * 3,
 	}
 
 	for {
 
-		log.Println("abriendo serial")
-        	s, err := serial.OpenPort(config)
+		log.Println("open port serial")
+		s, err := serial.OpenPort(config)
 
-        	if err != nil {
-                	log.Println(err)
+		if err != nil {
+			log.Println(err)
 			time.Sleep(time.Second * 5)
 			continue
-        	}
+		}
 
 		ch := make(chan []byte)
 		go read(s, ch, timeout)
@@ -57,12 +78,13 @@ func read(s *serial.Port, ch chan []byte, timeout int) {
 	buf := make([]byte, 128)
 	tick := time.Tick(time.Duration(timeout) * time.Second)
 	eof := make(chan bool)
+	defer close(eof)
 
 	countError := 0
 	for {
 		select {
 		case <-tick:
-			log.Println("leyendo serial")
+			log.Println("port serial reading")
 			result := make([]byte, 0)
 			for {
 				n, _ := s.Read(buf)
@@ -76,9 +98,9 @@ func read(s *serial.Port, ch chan []byte, timeout int) {
 			}
 		default:
 			go func() {
-				if _ , err := s.Read(buf); err != nil {
+				if _, err := s.Read(buf); err != nil {
 					log.Println(err)
-                                        eof <- true
+					eof <- true
 					return
 				}
 				countError = 0
@@ -88,7 +110,6 @@ func read(s *serial.Port, ch chan []byte, timeout int) {
 			case b := <-eof:
 				countError++
 				if b && (countError > 10) {
-					log.Println("10 lecturas")
 					return
 				}
 
@@ -99,4 +120,3 @@ func read(s *serial.Port, ch chan []byte, timeout int) {
 		}
 	}
 }
-
