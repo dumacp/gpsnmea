@@ -1,28 +1,15 @@
 /*
-Package implements a binary for regular expressions.
+Package implements a binary for read serial port nmea.
 
-The syntax of the regular expressions accepted is:
-
-    regexp:
-        concatenation { '|' concatenation }
-    concatenation:
-        { closure }
-    closure:
-        term [ '*' | '+' | '?' ]
-    term:
-        '^'
-        '$'
-        '.'
-        character
-        '[' [ '^' ] character-ranges ']'
-        '(' regexp ')'
 */
 package main
 
 import (
+	"bufio"
 	"flag"
 	"github.com/tarm/serial"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -61,9 +48,37 @@ func main() {
 		go read(s, ch, timeout)
 
 		for v := range ch {
-			log.Printf("%q\n", v)
+			reader := &Reader{
+				r: bufio.NewReader(strings.NewReader(string(v))),
+			}
+			b, err := reader.Gprmc()
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			log.Printf("frame: %q\n", b)
 		}
 	}
+}
+
+type Reader struct {
+	r *bufio.Reader
+}
+
+func (r *Reader) Gprmc() ([]byte, error) {
+	var err error
+	for err != nil {
+		b, _, err := r.r.ReadLine()
+		if err != nil {
+			return nil, nil
+		}
+		if len(b) > 6 {
+			if string(b[0:6]) == "$GPRMC" {
+				return b, nil
+			}
+		}
+	}
+	return nil, nil
 }
 
 func read(s *serial.Port, ch chan []byte, timeout int) {
