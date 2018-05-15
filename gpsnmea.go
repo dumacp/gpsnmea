@@ -109,7 +109,7 @@ func read(s *serial.Port, ch chan []byte, timeout int) {
 	for {
 		select {
 		case <-tick:
-			log.Println("port serial reading")
+			//log.Println("port serial reading")
 			result := make([]byte, 0)
 			for {
 				n, _ := s.Read(buf)
