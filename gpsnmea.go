@@ -7,26 +7,49 @@ package main
 import (
 	"bufio"
 	"flag"
-	"github.com/tarm/serial"
 	"log"
-	_ "strings"
 	"time"
 	"errors"
+	"github.com/tarm/serial"
+	"github.com/dumacp/pubsub"
 )
 
 var timeout int
 var baudRate int
 var port string
+var mqtt bool
 
 func init() {
 	flag.IntVar(&timeout, "timeout", 30, "timeout to capture frames.")
 	flag.IntVar(&baudRate, "baudRate", 115200, "baud rate to capture nmea's frames.")
 	flag.StringVar(&port, "port", "/dev/ttyUSB1", "device serial to read.")
+	flag.BoolVar(&mqtt, "mqtt", false, "send messages to local broker.")
 }
+
+//var pub *pubsub.PubSub
 
 func main() {
 
 	flag.Parse()
+
+
+	var msgChan chan string
+	if mqtt {
+		pub, err := pubsub.NewConnection("go-gpsnmea")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer pub.Disconnect()
+		msgChan = make(chan string)
+		go pub.Publish("EVENTS/gps", msgChan)
+		go func() {
+			for v := range pub.Err {
+				log.Println(v)
+			}
+		}()
+	}
+
+
 	log.Println("port serial config ...")
 	config := &serial.Config{
 		Name:        port,
@@ -59,6 +82,13 @@ func main() {
 				continue
 			}
 			log.Printf("frame: %q\n", b)
+			//only publish if frame GPRMC is not quiet
+			if mqtt {
+				msg := string(b[:])
+				if msg[0:8] != "$GPRMC,," {
+					msgChan <- msg
+				}
+			}
 		}
 	}
 }
