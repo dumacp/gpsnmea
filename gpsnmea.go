@@ -10,6 +10,7 @@ import (
 	"log"
 	"time"
 	"errors"
+	"fmt"
 	"github.com/tarm/serial"
 	"github.com/dumacp/pubsub"
 )
@@ -54,7 +55,7 @@ func main() {
 	config := &serial.Config{
 		Name:        port,
 		Baud:        baudRate,
-		ReadTimeout: time.Second * 3,
+		//ReadTimeout: time.Second * 3,
 	}
 
 	for {
@@ -84,8 +85,10 @@ func main() {
 			log.Printf("frame: %q\n", b)
 			//only publish if frame GPRMC is not quiet
 			if mqtt {
-				msg := string(b[:])
-				if msg[0:8] != "$GPRMC,," {
+				timeStamp := float64(time.Now().UnixNano())/1000000000
+				frame := string(b[:])
+				if frame[0:8] != "$GPRMC,," {
+					msg := fmt.Sprintf("{\"timeStamp\": %f, \"value\": %q, \"type\": \"GPRMC\"}",timeStamp, frame)
 					msgChan <- msg
 				}
 			}
@@ -131,21 +134,24 @@ func read(s *serial.Port, ch chan []byte, timeout int) {
 	defer close(ch)
 
 	buf := make([]byte, 128)
-	tick := time.Tick(time.Duration(timeout) * time.Second)
+	tick := time.NewTicker(time.Duration(timeout) * time.Second)
+	defer tick.Stop()
 	eof := make(chan bool)
 	defer close(eof)
 
 	countError := 0
 	for {
 		select {
-		case <-tick:
-			//log.Println("port serial reading")
+		case <-tick.C:
+			log.Println("port serial reading 1")
 			result := make([]byte, 0)
 			for {
 				n, _ := s.Read(buf)
 				if n == 0 {
+					log.Println("port serial reading 2")
 					break
 				}
+				log.Printf("port serial reading 3: %s\n", buf[:n])
 				result = append(result, buf[:n]...)
 			}
 			if len(result) > 0 {
@@ -154,7 +160,7 @@ func read(s *serial.Port, ch chan []byte, timeout int) {
 		default:
 			go func() {
 				if _, err := s.Read(buf); err != nil {
-					//log.Println(err)
+					log.Println(err)
 					eof <- true
 					return
 				}
