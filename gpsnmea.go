@@ -6,36 +6,37 @@ package gpsnmea
 
 import (
 	"bufio"
-	"log"
-	"time"
-	"strings"
 	"github.com/tarm/serial"
+	"log"
+	"strings"
+	"time"
 )
 
 type Device struct {
-	port	*serial.Port
-	filter	[]string
-	ok	bool
+	port   *serial.Port
+	filter []string
+	ok     bool
 }
 
 func NewDevice(portName string, baudRate int, filters ...string) (*Device, error) {
 	log.Println("port serial config ...")
 	config := &serial.Config{
-		Name:        portName,
-		Baud:        baudRate,
+		Name: portName,
+		Baud: baudRate,
 		//ReadTimeout: time.Second * 3,
 	}
-	sentencesFilter := make([]string,0)
+	sentencesFilter := make([]string, 0)
 	sentencesFilter = append(sentencesFilter, filters...)
 	s, err := serial.OpenPort(config)
 	if err != nil {
 		return nil, err
 	}
 	dev := &Device{
-		port:	s,
+		port:   s,
 		filter: sentencesFilter,
-		ok:	true,
+		ok:     true,
 	}
+	log.Println("port serial Open!")
 	return dev, nil
 }
 
@@ -48,12 +49,12 @@ func (dev *Device) Close() bool {
 	return true
 }
 
-func isSentence(s1 string, filter []string) (bool) {
+func isSentence(s1 string, filter []string) bool {
 	if len(s1) > 8 {
 		for _, v := range filter {
 			if strings.HasPrefix(s1, v) {
 				//if s1[1:8] != "GPRMC,," {
-					return true
+				return true
 				//}
 			}
 		}
@@ -61,7 +62,7 @@ func isSentence(s1 string, filter []string) (bool) {
 	return false
 }
 
-func (dev *Device) Read() (chan string) {
+func (dev *Device) Read() chan string {
 
 	if !dev.ok {
 		log.Println("Device is closed")
@@ -90,9 +91,10 @@ func (dev *Device) Read() (chan string) {
 			data := string(b[:])
 			//log.Printf("serial reading: %q\n", data)
 			if isSentence(data, dev.filter) {
-				ch <- data
+				ch <- strings.TrimSpace(data)
 			}
 		}
 	}()
+	log.Println("reading port")
 	return ch
 }
