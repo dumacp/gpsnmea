@@ -129,27 +129,29 @@ func LatLongToDecimalDegree(num float64, cord string) float64 {
 }
 
 func DecimalDegreeToLat(lat float64) string {
-	latDirection := "S"
-	if lat > 0 {
-		latDirection = "N"
+	latDirection := "N"
+	if lat <= 0 {
+		latDirection = "S"
+		lat = -lat
 	}
 	latitude := uint8(lat)
 	latitudeMinutes := uint8((lat - float64(latitude)) * 60)
 	latitudeSeconds := (lat - float64(latitude) - float64(latitudeMinutes)/60) * 3600
 
-	return fmt.Sprintf("%v%v.%v,%v", latitude, latitudeMinutes, latitudeSeconds*100/60, latDirection)
+	return fmt.Sprintf("%02d%02d.%v,%v", latitude, latitudeMinutes, int(latitudeSeconds*100000/60), latDirection)
 }
 
 func DecimalDegreeToLon(lon float64) string {
-	lonDirection := "W"
-	if lon > 0 {
-		lonDirection = "E"
+	lonDirection := "E"
+	if lon <= 0 {
+		lonDirection = "W"
+		lon = -lon
 	}
 	longitude := uint8(lon)
 	longitudeMinutes := uint8((lon - float64(longitude)) * 60)
 	longitudeSeconds := (lon - float64(longitude) - float64(longitudeMinutes)/60) * 3600
 
-	return fmt.Sprintf("%v%v.%v,%v", longitude, longitudeMinutes, longitudeSeconds*100/60, lonDirection)
+	return fmt.Sprintf("%02d%02d.%v,%v", longitude, longitudeMinutes, int(longitudeSeconds*100000/60), lonDirection)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
