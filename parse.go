@@ -1,44 +1,45 @@
 package gpsnmea
 
-
 import (
+	"fmt"
 	"strconv"
 	"strings"
+
 	//"log"
 	"math"
 )
 
 type Gprmc struct {
-	TimeStamp	string
-	Validity	bool
-	Lat	float64
-	LatCord		string
-	Long	float64
-	LongCord	string
-	Speed	float64
-	TrueCourse	float64
-	DateStamp	string
-	MagneticVar	float64
-	MagneticVarCord	string
-	Checksum	int64
+	TimeStamp       string
+	Validity        bool
+	Lat             float64
+	LatCord         string
+	Long            float64
+	LongCord        string
+	Speed           float64
+	TrueCourse      float64
+	DateStamp       string
+	MagneticVar     float64
+	MagneticVarCord string
+	Checksum        int64
 }
 
 type Gpgga struct {
-	TimeStamp	string
-	Lat	float64
-	LatCord		string
-	Long	float64
-	LongCord	string
-	FixQuality	int
-	NumberSat	int
-	HDop	float64
-	Altitude	float64
-	AltCord	string
-	Geoidal	float64
-	GeoidalUnit	string
-	Dgpsupdate	float64
-	DrefStationId	float64
-	Checksum	int64
+	TimeStamp     string
+	Lat           float64
+	LatCord       string
+	Long          float64
+	LongCord      string
+	FixQuality    int
+	NumberSat     int
+	HDop          float64
+	Altitude      float64
+	AltCord       string
+	Geoidal       float64
+	GeoidalUnit   string
+	Dgpsupdate    float64
+	DrefStationId float64
+	Checksum      int64
 }
 
 func ParseRMC(s string) *Gprmc {
@@ -60,12 +61,11 @@ func ParseRMC(s string) *Gprmc {
 	dateStamp := fields[9]
 	magneticVar, _ := strconv.ParseFloat(fields[10], 64)
 
-	fields2 := strings.Split(fields[12],"*")
+	fields2 := strings.Split(fields[12], "*")
 	magneticVarCord := fields2[0]
 	checksum, _ := strconv.ParseInt(fields2[1], 16, 32)
 
-
-	return &Gprmc {
+	return &Gprmc{
 		timeStamp,
 		validity,
 		lat,
@@ -96,11 +96,11 @@ func ParseGGA(s string) *Gpgga {
 	geoid, _ := strconv.ParseFloat(fields[11], 64)
 	dgps, _ := strconv.ParseFloat(fields[13], 64)
 
-	fields2 := strings.Split(fields[14],"*")
+	fields2 := strings.Split(fields[14], "*")
 	drefStation, _ := strconv.ParseFloat(fields2[0], 64)
 	checksum, _ := strconv.ParseInt(fields2[1], 16, 32)
 
-	return &Gpgga {
+	return &Gpgga{
 		timeStamp,
 		lat,
 		fields[3],
@@ -120,12 +120,36 @@ func ParseGGA(s string) *Gpgga {
 }
 
 func LatLongToDecimalDegree(num float64, cord string) float64 {
-	dec, fra := math.Modf(num/100)
+	dec, fra := math.Modf(num / 100)
 	if strings.Contains(cord, "W") || strings.Contains(cord, "S") {
-		return (-1)*(dec+fra*100/60)
+		return (-1) * (dec + fra*100/60)
 	}
-	return dec+fra*100/60
+	return dec + fra*100/60
 
+}
+
+func DecimalDegreeToLat(lat float64) string {
+	latDirection := "S"
+	if lat > 0 {
+		latDirection = "N"
+	}
+	latitude := uint8(lat)
+	latitudeMinutes := uint8((lat - float64(latitude)) * 60)
+	latitudeSeconds := (lat - float64(latitude) - float64(latitudeMinutes)/60) * 3600
+
+	return fmt.Sprintf("%v%v.%v,%v", latitude, latitudeMinutes, latitudeSeconds*100/60, latDirection)
+}
+
+func DecimalDegreeToLon(lon float64) string {
+	lonDirection := "W"
+	if lon > 0 {
+		lonDirection = "E"
+	}
+	longitude := uint8(lon)
+	longitudeMinutes := uint8((lon - float64(longitude)) * 60)
+	longitudeSeconds := (lon - float64(longitude) - float64(longitudeMinutes)/60) * 3600
+
+	return fmt.Sprintf("%v%v.%v,%v", longitude, longitudeMinutes, longitudeSeconds*100/60, lonDirection)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -164,7 +188,7 @@ func Distance(lat1 float64, lng1 float64, lat2 float64, lng2 float64, unit ...st
 	theta := float64(lng1 - lng2)
 	radtheta := float64(PI * theta / 180)
 
-	dist := math.Sin(radlat1) * math.Sin(radlat2) + math.Cos(radlat1) * math.Cos(radlat2) * math.Cos(radtheta)
+	dist := math.Sin(radlat1)*math.Sin(radlat2) + math.Cos(radlat1)*math.Cos(radlat2)*math.Cos(radtheta)
 
 	if dist > 1 {
 		dist = 1
