@@ -151,7 +151,7 @@ func DecimalDegreeToLon(lon float64) string {
 	longitudeMinutes := uint8((lon - float64(longitude)) * 60)
 	longitudeSeconds := (lon - float64(longitude) - float64(longitudeMinutes)/60) * 3600
 
-	return fmt.Sprintf("%02d%02d.%v,%v", longitude, longitudeMinutes, int(longitudeSeconds*100000/60), lonDirection)
+	return fmt.Sprintf("%03d%02d.%v,%v", longitude, longitudeMinutes, int(longitudeSeconds*1000000/60), lonDirection)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
