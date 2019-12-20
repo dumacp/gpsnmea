@@ -5,15 +5,17 @@ Package implements a binary for read serial port nmea.
 package main
 
 import (
-	_ "io"
 	"bufio"
 	"flag"
-	"log"
-	"time"
-	"strings"
 	"fmt"
-	"github.com/tarm/serial"
+	_ "io"
+	"log"
+	"strings"
+	"time"
+
+	"github.com/dumacp/gpsnmea"
 	"github.com/dumacp/pubsub"
+	"github.com/tarm/serial"
 )
 
 var timeout int
@@ -36,7 +38,6 @@ func main() {
 
 	flag.Parse()
 
-
 	var msgChan chan string
 	if mqtt {
 		pub, err := pubsub.NewConnection("go-gpsnmea")
@@ -53,13 +54,7 @@ func main() {
 		}()
 	}
 
-
 	log.Println("port serial config ...")
-	config := &serial.Config{
-		Name:        port,
-		Baud:        baudRate,
-		//ReadTimeout: time.Second * 3,
-	}
 
 	for {
 
@@ -71,10 +66,10 @@ func main() {
 			time.Sleep(time.Second * 5)
 			continue
 		}
-		ch := make(chan []byte,0)
+
 		t1 := time.NewTicker(time.Duration(timeout) * time.Second)
 		defer t1.Stop()
-		go s.read(ch)
+		ch := s.Read()
 
 		for v := range ch {
 
@@ -88,9 +83,9 @@ func main() {
 			select {
 			case <-t1.C:
 				if mqtt {
-					timeStamp := float64(time.Now().UnixNano())/1000000000
+					timeStamp := float64(time.Now().UnixNano()) / 1000000000
 					if frame[0:8] != "$GPRMC,," {
-						msg := fmt.Sprintf("{\"timeStamp\": %f, \"value\": %q, \"type\": \"GPRMC\"}",timeStamp, frame)
+						msg := fmt.Sprintf("{\"timeStamp\": %f, \"value\": %q, \"type\": \"GPRMC\"}", timeStamp, frame)
 						msgChan <- msg
 					}
 				}
@@ -118,12 +113,12 @@ func (r *Reader) Read(b []byte) (int, error) {
 }
 /**/
 
-func isSentence(s1 string) (bool) {
+func isSentence(s1 string) bool {
 	if len(s1) > 8 {
 		for _, v := range sentences {
 			if strings.HasPrefix(s1, v) {
 				//if s1[1:8] != "GPRMC,," {
-					return true
+				return true
 				//}
 			}
 		}
