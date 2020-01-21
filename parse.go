@@ -100,6 +100,9 @@ func ParseGGA(s string) *Gpgga {
 	dgps, _ := strconv.ParseFloat(fields[13], 64)
 
 	fields2 := strings.Split(fields[14], "*")
+	if len(fields2) < 2 {
+		return nil
+	}
 	drefStation, _ := strconv.ParseFloat(fields2[0], 64)
 	checksum, _ := strconv.ParseInt(fields2[1], 16, 32)
 
