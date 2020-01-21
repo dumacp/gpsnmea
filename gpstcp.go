@@ -16,6 +16,7 @@ type DeviceTCP struct {
 	conn   net.Conn
 	filter []string
 	ok     bool
+	server net.Listener
 }
 
 func NewDeviceTCP(socket string, filters ...string) (*DeviceTCP, error) {
@@ -27,14 +28,15 @@ func NewDeviceTCP(socket string, filters ...string) (*DeviceTCP, error) {
 	if err != nil {
 		return nil, err
 	}
-	conn, err := server.Accept()
-	if err != nil {
-		return nil, err
-	}
+	// conn, err := server.Accept()
+	// if err != nil {
+	// 	return nil, err
+	// }
 	dev := &DeviceTCP{
-		conn:   conn,
+		// conn:   conn,
+		server: server,
 		filter: sentencesFilter,
-		ok:     true,
+		ok:     false,
 	}
 	log.Println("Accept connection!")
 	return dev, nil
@@ -47,6 +49,16 @@ func (dev *DeviceTCP) Close() bool {
 		return false
 	}
 	return true
+}
+
+func (dev *DeviceTCP) Accept() error {
+	conn, err := dev.server.Accept()
+	if err != nil {
+		return err
+	}
+	dev.ok = true
+	dev.conn = conn
+	return nil
 }
 
 func (dev *DeviceTCP) Read() chan string {
