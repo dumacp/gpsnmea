@@ -62,6 +62,9 @@ func ParseRMC(s string) *Gprmc {
 	magneticVar, _ := strconv.ParseFloat(fields[10], 64)
 
 	fields2 := strings.Split(fields[12], "*")
+	if len(fields2) < 2 {
+		return nil
+	}
 	magneticVarCord := fields2[0]
 	checksum, _ := strconv.ParseInt(fields2[1], 16, 32)
 
