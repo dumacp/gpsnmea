@@ -13,7 +13,7 @@ import (
 )
 
 type DeviceTCP struct {
-	conn   net.Conn
+	server net.Listener
 	filter []string
 	ok     bool
 }
@@ -27,22 +27,19 @@ func NewDeviceTCP(socket string, filters ...string) (*DeviceTCP, error) {
 	if err != nil {
 		return nil, err
 	}
-	conn, err := server.Accept()
-	if err != nil {
-		return nil, err
-	}
+
 	dev := &DeviceTCP{
-		conn:   conn,
+		server: server,
 		filter: sentencesFilter,
 		ok:     true,
 	}
-	log.Println("Accept connection!")
+	log.Println("create server TCP!")
 	return dev, nil
 }
 
 func (dev *DeviceTCP) Close() bool {
 	dev.ok = false
-	if err := dev.conn.Close(); err != nil {
+	if err := dev.server.Close(); err != nil {
 		log.Println(err)
 		return false
 	}
@@ -52,7 +49,12 @@ func (dev *DeviceTCP) Close() bool {
 func (dev *DeviceTCP) Read() chan string {
 
 	if !dev.ok {
-		log.Println("Device is closed")
+		log.Println("Device server gps is closed")
+		return nil
+	}
+
+	conn, err := dev.server.Accept()
+	if err != nil {
 		return nil
 	}
 	ch := make(chan string)
@@ -62,13 +64,13 @@ func (dev *DeviceTCP) Read() chan string {
 	countError := 0
 	go func() {
 		defer close(ch)
-		bf := bufio.NewReader(dev.conn)
+		bf := bufio.NewReader(conn)
 		for {
 			b, err := bf.ReadBytes('\n')
 			if err != nil {
 				log.Println(err)
 				if countError > 3 {
-					dev.Close()
+					conn.Close()
 					return
 				}
 				time.Sleep(1 * time.Second)
