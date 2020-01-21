@@ -32,7 +32,7 @@ func NewDeviceTCP(socket string, filters ...string) (*DeviceTCP, error) {
 		// conn:   conn,
 		server: server,
 		filter: sentencesFilter,
-		ok:     false,
+		ok:     true,
 	}
 	log.Println("create server TCP!")
 	return dev, nil
