@@ -18,12 +18,17 @@ type DeviceTCP struct {
 	ok     bool
 }
 
+const (
+	timeoutDeadLine = 20 * time.Second
+)
+
 func NewDeviceTCP(socket string, filters ...string) (*DeviceTCP, error) {
 	log.Println("listen server ...")
 
 	sentencesFilter := make([]string, 0)
 	sentencesFilter = append(sentencesFilter, filters...)
 	server, err := net.Listen("tcp", socket)
+
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +59,9 @@ func (dev *DeviceTCP) Read() chan string {
 		return nil
 	}
 
+	tcplistener := dev.server.(*net.TCPListener)
+	tcplistener.SetDeadline(time.Now().Add(timeoutDeadLine))
+
 	conn, err := dev.server.Accept()
 	if err != nil {
 		return nil
@@ -67,6 +75,7 @@ func (dev *DeviceTCP) Read() chan string {
 		defer close(ch)
 		bf := bufio.NewReader(conn)
 		for {
+			conn.SetDeadline(time.Now().Add(timeoutDeadLine))
 			b, err := bf.ReadBytes('\n')
 			if err != nil {
 				log.Println(err)

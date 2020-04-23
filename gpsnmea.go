@@ -14,6 +14,7 @@ import (
 )
 
 type Device struct {
+	config *serial.Config
 	port   *serial.Port
 	filter []string
 	ok     bool
@@ -28,21 +29,29 @@ func NewDevice(portName string, baudRate int, filters ...string) (*Device, error
 	}
 	sentencesFilter := make([]string, 0)
 	sentencesFilter = append(sentencesFilter, filters...)
-	s, err := serial.OpenPort(config)
-	if err != nil {
-		return nil, err
-	}
 	dev := &Device{
-		port:   s,
+		config: config,
 		filter: sentencesFilter,
-		ok:     true,
 	}
 	log.Println("port serial Open!")
 	return dev, nil
 }
 
+func (dev *Device) Open() error {
+	s, err := serial.OpenPort(dev.config)
+	if err != nil {
+		return err
+	}
+	dev.port = s
+	dev.ok = true
+	return nil
+}
+
 func (dev *Device) Close() bool {
 	dev.ok = false
+	if dev.port == nil {
+		return false
+	}
 	if err := dev.port.Close(); err != nil {
 		log.Println(err)
 		return false
