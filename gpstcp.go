@@ -14,19 +14,19 @@ import (
 
 type DeviceTCP struct {
 	server net.Listener
-	filter []string
-	ok     bool
+	// filter []string
+	ok bool
 }
 
 const (
 	timeoutDeadLine = 20 * time.Second
 )
 
-func NewDeviceTCP(socket string, filters ...string) (*DeviceTCP, error) {
+func NewDeviceTCP(socket string) (*DeviceTCP, error) {
 	log.Println("listen server ...")
 
-	sentencesFilter := make([]string, 0)
-	sentencesFilter = append(sentencesFilter, filters...)
+	// sentencesFilter := make([]string, 0)
+	// sentencesFilter = append(sentencesFilter, filters...)
 	server, err := net.Listen("tcp", socket)
 
 	if err != nil {
@@ -36,11 +36,24 @@ func NewDeviceTCP(socket string, filters ...string) (*DeviceTCP, error) {
 	dev := &DeviceTCP{
 		// conn:   conn,
 		server: server,
-		filter: sentencesFilter,
-		ok:     true,
+		// filter: sentencesFilter,
+		ok: false,
 	}
 	log.Println("create server TCP!")
 	return dev, nil
+}
+
+func (dev *DeviceTCP) Accept() (net.Conn, error) {
+	tcplistener := dev.server.(*net.TCPListener)
+	tcplistener.SetDeadline(time.Now().Add(timeoutDeadLine))
+
+	conn, err := dev.server.Accept()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	dev.ok = true
+	return conn, nil
 }
 
 func (dev *DeviceTCP) Close() bool {
@@ -52,20 +65,23 @@ func (dev *DeviceTCP) Close() bool {
 	return true
 }
 
-func (dev *DeviceTCP) Read() chan string {
+func ReadTCP(conn net.Conn, filters ...string) chan string {
 
-	if !dev.ok {
-		log.Println("Device server gps is closed")
-		return nil
-	}
+	sentencesFilter := make([]string, 0)
+	sentencesFilter = append(sentencesFilter, filters...)
 
-	tcplistener := dev.server.(*net.TCPListener)
-	tcplistener.SetDeadline(time.Now().Add(timeoutDeadLine))
+	// if !dev.ok {
+	// 	log.Println("Device server gps is closed")
+	// 	return nil
+	// }
 
-	conn, err := dev.server.Accept()
-	if err != nil {
-		return nil
-	}
+	// tcplistener := dev.server.(*net.TCPListener)
+	// tcplistener.SetDeadline(time.Now().Add(timeoutDeadLine))
+
+	// conn, err := dev.server.Accept()
+	// if err != nil {
+	// 	return nil
+	// }
 	ch := make(chan string)
 
 	//buf := make([]byte, 128)
@@ -89,7 +105,7 @@ func (dev *DeviceTCP) Read() chan string {
 			}
 			data := string(b[:])
 			//log.Printf("serial reading: %q\n", data)
-			if isSentence(data, dev.filter) {
+			if isSentence(data, sentencesFilter) {
 				ch <- strings.TrimSpace(data)
 			}
 		}
