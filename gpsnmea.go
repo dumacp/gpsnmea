@@ -23,9 +23,9 @@ type Device struct {
 func NewDevice(portName string, baudRate int, filters ...string) (*Device, error) {
 	log.Println("port serial config ...")
 	config := &serial.Config{
-		Name: portName,
-		Baud: baudRate,
-		//ReadTimeout: time.Second * 3,
+		Name:        portName,
+		Baud:        baudRate,
+		ReadTimeout: time.Second * 20,
 	}
 	sentencesFilter := make([]string, 0)
 	sentencesFilter = append(sentencesFilter, filters...)
