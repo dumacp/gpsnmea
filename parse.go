@@ -10,6 +10,7 @@ import (
 )
 
 type Gprmc struct {
+	Fields          []string
 	TimeStamp       string
 	Validity        bool
 	Lat             float64
@@ -25,6 +26,7 @@ type Gprmc struct {
 }
 
 type Gpgga struct {
+	Fileds        []string
 	TimeStamp     string
 	Lat           float64
 	LatCord       string
@@ -69,6 +71,7 @@ func ParseRMC(s string) *Gprmc {
 	checksum, _ := strconv.ParseInt(fields2[1], 16, 32)
 
 	return &Gprmc{
+		fields,
 		timeStamp,
 		validity,
 		lat,
@@ -107,6 +110,7 @@ func ParseGGA(s string) *Gpgga {
 	checksum, _ := strconv.ParseInt(fields2[1], 16, 32)
 
 	return &Gpgga{
+		fields,
 		timeStamp,
 		lat,
 		fields[3],
@@ -143,8 +147,16 @@ func DecimalDegreeToLat(lat float64) string {
 	latitude := uint8(lat)
 	latitudeMinutes := uint8((lat - float64(latitude)) * 60)
 	latitudeSeconds := (lat - float64(latitude) - float64(latitudeMinutes)/60) * 3600
+	latitudeSecondsDecimal := latitudeSeconds * 100 / 60
+	if latitudeSecondsDecimal < 1 {
+		latitudeSecondsDecimal = latitudeSecondsDecimal * (10000)
+	} else if latitudeSecondsDecimal < 10 {
+		latitudeSecondsDecimal = latitudeSecondsDecimal * (100000)
+	} else {
+		latitudeSecondsDecimal = latitudeSecondsDecimal * (1000000)
+	}
 
-	return fmt.Sprintf("%02d%02d.%v,%v", latitude, latitudeMinutes, int(latitudeSeconds*100000/60), latDirection)
+	return fmt.Sprintf("%02d%02d.%6d,%v", latitude, latitudeMinutes, int(latitudeSecondsDecimal), latDirection)
 }
 
 func DecimalDegreeToLon(lon float64) string {
@@ -156,8 +168,16 @@ func DecimalDegreeToLon(lon float64) string {
 	longitude := uint8(lon)
 	longitudeMinutes := uint8((lon - float64(longitude)) * 60)
 	longitudeSeconds := (lon - float64(longitude) - float64(longitudeMinutes)/60) * 3600
+	longitudeSecondsDecimal := longitudeSeconds * 100 / 60
+	if longitudeSecondsDecimal < 1 {
+		longitudeSecondsDecimal = longitudeSecondsDecimal * (10000)
+	} else if longitudeSecondsDecimal < 10 {
+		longitudeSecondsDecimal = longitudeSecondsDecimal * (100000)
+	} else {
+		longitudeSecondsDecimal = longitudeSecondsDecimal * (1000000)
+	}
 
-	return fmt.Sprintf("%03d%02d.%v,%v", longitude, longitudeMinutes, int(longitudeSeconds*1000000/60), lonDirection)
+	return fmt.Sprintf("%03d%02d.%06d,%v", longitude, longitudeMinutes, int(longitudeSecondsDecimal), lonDirection)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
