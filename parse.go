@@ -10,6 +10,7 @@ import (
 )
 
 type Gprmc struct {
+	Raw             string
 	Fields          []string
 	TimeStamp       string
 	Validity        bool
@@ -26,6 +27,7 @@ type Gprmc struct {
 }
 
 type Gpgga struct {
+	Raw           string
 	Fileds        []string
 	TimeStamp     string
 	Lat           float64
@@ -71,6 +73,7 @@ func ParseRMC(s string) *Gprmc {
 	checksum, _ := strconv.ParseInt(fields2[1], 16, 32)
 
 	return &Gprmc{
+		s,
 		fields,
 		timeStamp,
 		validity,
@@ -110,6 +113,7 @@ func ParseGGA(s string) *Gpgga {
 	checksum, _ := strconv.ParseInt(fields2[1], 16, 32)
 
 	return &Gpgga{
+		s,
 		fields,
 		timeStamp,
 		lat,
