@@ -25,7 +25,7 @@ func NewDevice(portName string, baudRate int, filters ...string) (*Device, error
 	config := &serial.Config{
 		Name:        portName,
 		Baud:        baudRate,
-		ReadTimeout: time.Second * 20,
+		ReadTimeout: time.Second * 10,
 	}
 	sentencesFilter := make([]string, 0)
 	sentencesFilter = append(sentencesFilter, filters...)
@@ -98,6 +98,7 @@ func (dev *Device) Read() chan string {
 				countError++
 				continue
 			}
+			countError = 0
 			data := string(b[:])
 			//log.Printf("serial reading: %q\n", data)
 			if isSentence(data, dev.filter) {

@@ -1,6 +1,5 @@
 /*
 Package implements a binary for read serial port nmea.
-
 */
 package main
 
@@ -40,7 +39,7 @@ func main() {
 
 	var msgChan chan string
 	if mqtt {
-		pub, err := pubsub.NewConnection("go-gpsnmea")
+		pub, err := pubsub.NewConnection("go-gpsnmea-test")
 		if err != nil {
 			log.Fatal(err)
 		}

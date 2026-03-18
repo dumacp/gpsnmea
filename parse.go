@@ -48,8 +48,6 @@ type Gpgga struct {
 
 func ParseRMC(s string) *Gprmc {
 	fields := strings.Split(s, ",")
-	//log.Printf("fields: %v,\nlen: %d", fields, len(fields))
-
 	if len(fields) < 12 {
 		return nil
 	}
@@ -184,33 +182,33 @@ func DecimalDegreeToLon(lon float64) string {
 	return fmt.Sprintf("%03d%02d.%06d,%v", longitude, longitudeMinutes, int(longitudeSecondsDecimal), lonDirection)
 }
 
-//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//:::                                                                         :::
-//:::  This routine calculates the distance between two points (given the     :::
-//:::  latitude/longitude of those points). It is being used to calculate     :::
-//:::  the distance between two locations using GeoDataSource (TM) prodducts  :::
-//:::                                                                         :::
-//:::  Definitions:                                                           :::
-//:::    South latitudes are negative, east longitudes are positive           :::
-//:::                                                                         :::
-//:::  Passed to function:                                                    :::
-//:::    lat1, lon1 = Latitude and Longitude of point 1 (in decimal degrees)  :::
-//:::    lat2, lon2 = Latitude and Longitude of point 2 (in decimal degrees)  :::
-//:::    unit = the unit you desire for results                               :::
-//:::           where: 'M' is statute miles (default)                         :::
-//:::                  'K' is kilometers                                      :::
-//:::                  'N' is nautical miles                                  :::
-//:::                                                                         :::
-//:::  Worldwide cities and other features databases with latitude longitude  :::
-//:::  are available at https://www.geodatasource.com                         :::
-//:::                                                                         :::
-//:::  For enquiries, please contact sales@geodatasource.com                  :::
-//:::                                                                         :::
-//:::  Official Web site: https://www.geodatasource.com                       :::
-//:::                                                                         :::
-//:::               GeoDataSource.com (C) All Rights Reserved 2018            :::
-//:::                                                                         :::
-//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+// :::                                                                         :::
+// :::  This routine calculates the distance between two points (given the     :::
+// :::  latitude/longitude of those points). It is being used to calculate     :::
+// :::  the distance between two locations using GeoDataSource (TM) prodducts  :::
+// :::                                                                         :::
+// :::  Definitions:                                                           :::
+// :::    South latitudes are negative, east longitudes are positive           :::
+// :::                                                                         :::
+// :::  Passed to function:                                                    :::
+// :::    lat1, lon1 = Latitude and Longitude of point 1 (in decimal degrees)  :::
+// :::    lat2, lon2 = Latitude and Longitude of point 2 (in decimal degrees)  :::
+// :::    unit = the unit you desire for results                               :::
+// :::           where: 'M' is statute miles (default)                         :::
+// :::                  'K' is kilometers                                      :::
+// :::                  'N' is nautical miles                                  :::
+// :::                                                                         :::
+// :::  Worldwide cities and other features databases with latitude longitude  :::
+// :::  are available at https://www.geodatasource.com                         :::
+// :::                                                                         :::
+// :::  For enquiries, please contact sales@geodatasource.com                  :::
+// :::                                                                         :::
+// :::  Official Web site: https://www.geodatasource.com                       :::
+// :::                                                                         :::
+// :::               GeoDataSource.com (C) All Rights Reserved 2018            :::
+// :::                                                                         :::
+// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 func Distance(lat1 float64, lng1 float64, lat2 float64, lng2 float64, unit ...string) float64 {
 	const PI float64 = 3.141592653589793
 
