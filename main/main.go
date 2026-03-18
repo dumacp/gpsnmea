@@ -57,39 +57,42 @@ func main() {
 
 	for {
 
-		log.Println("open port serial")
-		s, err := gpsnmea.NewDevice(port, baudRate)
+		if err := func() error {
+			log.Println("open port serial")
+			s, err := gpsnmea.NewDevice(port, baudRate)
+			if err != nil {
+				return err
+			}
 
-		if err != nil {
+			t1 := time.NewTicker(time.Duration(timeout) * time.Second)
+			defer t1.Stop()
+			ch := s.Read()
+
+			for v := range ch {
+
+				frame := string(v)
+				if !isSentence(frame) {
+					continue
+				}
+
+				log.Printf("frame: %s\n", v)
+				//only publish if frame GPRMC is not quiet
+				select {
+				case <-t1.C:
+					if mqtt {
+						timeStamp := float64(time.Now().UnixNano()) / 1000000000
+						if frame[0:8] != "$GPRMC,," {
+							msg := fmt.Sprintf("{\"timeStamp\": %f, \"value\": %q, \"type\": \"GPRMC\"}", timeStamp, frame)
+							msgChan <- msg
+						}
+					}
+				default:
+				}
+			}
+			return nil
+		}(); err != nil {
 			log.Println(err)
 			time.Sleep(time.Second * 5)
-			continue
-		}
-
-		t1 := time.NewTicker(time.Duration(timeout) * time.Second)
-		defer t1.Stop()
-		ch := s.Read()
-
-		for v := range ch {
-
-			frame := string(v)
-			if !isSentence(frame) {
-				continue
-			}
-
-			log.Printf("frame: %s\n", v)
-			//only publish if frame GPRMC is not quiet
-			select {
-			case <-t1.C:
-				if mqtt {
-					timeStamp := float64(time.Now().UnixNano()) / 1000000000
-					if frame[0:8] != "$GPRMC,," {
-						msg := fmt.Sprintf("{\"timeStamp\": %f, \"value\": %q, \"type\": \"GPRMC\"}", timeStamp, frame)
-						msgChan <- msg
-					}
-				}
-			default:
-			}
 		}
 	}
 }
