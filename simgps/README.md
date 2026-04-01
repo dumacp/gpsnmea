@@ -196,6 +196,24 @@ simgps -mqtt -ip 192.168.1.10 itinerario.json
 cat itinerario.json | jq -c '.[]' | simgps -mqtt
 ```
 
+### Loop infinito enviando el mismo punto cada 2 segundos
+
+```bash
+while true; do
+  echo '{"lat": 6.3, "long": -75.9}'
+  sleep 2
+done | simgps
+```
+
+Con publicación MQTT:
+
+```bash
+while true; do
+  echo '{"lat": 6.3, "long": -75.9}'
+  sleep 2
+done | simgps -mqtt -ip 192.168.1.10
+```
+
 ---
 
 ## Tópicos MQTT publicados
