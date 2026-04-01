@@ -50,6 +50,44 @@ O con ruta completa si el `PATH` no está configurado:
 ~/go/bin/simgps [opciones] [FILE]
 ```
 
+### Binarios precompilados
+
+En el directorio [`outputs/`](outputs/) se encuentran binarios precompilados listos para usar en determinadas arquitecturas:
+
+| Archivo             | Arquitectura         |
+|---------------------|----------------------|
+| `simgps_armv7`      | Linux ARM v7 (32-bit)|
+
+Para usarlos directamente, descarga el binario correspondiente, dale permisos de ejecución y ejecútalo:
+
+```bash
+chmod +x outputs/simgps_armv7
+./outputs/simgps_armv7 [opciones] [FILE]
+```
+
+### Compilación cruzada (cross-compile)
+
+Si necesitas compilar para una arquitectura diferente, puedes usar las variables de entorno de Go para realizar cross-compilation. Por ejemplo, para generar el binario ARM v7 incluido en `outputs/`:
+
+```bash
+env GOOS=linux GOARCH=arm GOARM=7 go build -o outputs/simgps_armv7
+```
+
+Otros ejemplos de arquitecturas comunes:
+
+| Arquitectura         | Comando                                                              |
+|----------------------|----------------------------------------------------------------------|
+| Linux ARM v7 (32-bit)| `env GOOS=linux GOARCH=arm GOARM=7 go build -o outputs/simgps_armv7`|
+| Linux ARM64          | `env GOOS=linux GOARCH=arm64 go build -o outputs/simgps_arm64`      |
+| Linux x86-64         | `env GOOS=linux GOARCH=amd64 go build -o outputs/simgps_amd64`      |
+| Windows x86-64       | `env GOOS=windows GOARCH=amd64 go build -o outputs/simgps.exe`      |
+
+Puedes consultar todas las combinaciones soportadas con:
+
+```bash
+go tool dist list
+```
+
 ---
 
 ## Ayuda de la CLI

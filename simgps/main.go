@@ -46,7 +46,7 @@ func main() {
 
 	if enableMqtt {
 		log.Println("MQTT enabled")
-		url := fmt.Sprintf("tcp://%s:%d", "127.0.0.1", 1883)
+		url := fmt.Sprintf("tcp://%s:%d", ip, port)
 		opt := mqtt.NewClientOptions().AddBroker(url)
 		opt.SetClientID("simulator-gps")
 
